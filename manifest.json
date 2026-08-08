@@ -2,15 +2,15 @@
   "name": "Leaflog — Indoor Plant Care Ledger",
   "short_name": "Leaflog",
   "description": "Track watering, fertilizing, and repotting for your indoor plants.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "https://vernekarvivek-dot.github.io/leaflog/index.html",
+  "scope": "https://vernekarvivek-dot.github.io/leaflog/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#EFEADE",
   "theme_color": "#37492A",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "https://vernekarvivek-dot.github.io/leaflog/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "https://vernekarvivek-dot.github.io/leaflog/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "https://vernekarvivek-dot.github.io/leaflog/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
