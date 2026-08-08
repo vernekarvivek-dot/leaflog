@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Leaflog — Indoor Plant Care Ledger</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#37492A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Leaflog">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFEADE;
+    --card:#FBF8F0;
+    --card-line:#DED5BE;
+    --ink:#242A1D;
+    --ink-soft:#5B6350;
+    --ink-faint:#8A8F7B;
+    --moss:#4F6B3E;
+    --moss-dark:#37492A;
+    --moss-pale:#E4EADB;
+    --amber:#C08A2E;
+    --amber-pale:#F3E7CC;
+    --rust:#B5452F;
+    --rust-pale:#F3DCD4;
+    --shadow: 0 1px 2px rgba(36,42,29,0.06), 0 4px 16px rgba(36,42,29,0.06);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  ::selection{ background:var(--moss-pale); color:var(--moss-dark); }
+
+  .app{
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:232px;
+    flex-shrink:0;
+    background:var(--moss-dark);
+    color:#EDE9D8;
+    display:flex;
+    flex-direction:column;
+    padding:28px 18px;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:600;
+    letter-spacing:0.01em;
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    margin-bottom:2px;
+    color:#F7F4E8;
+  }
+  .brand .leaf{ color:#9CC17E; font-size:18px; }
+  .brand-sub{
+    font-size:11.5px;
+    color:#B9C0A6;
+    margin-bottom:30px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+  }
+  nav.tabs{ display:flex; flex-direction:column; gap:2px; }
+  .tab-btn{
+    display:flex; align-items:center; gap:10px;
+    background:none; border:none; color:#D6D9C4;
+    font-family:'Inter',sans-serif; font-size:14.5px; font-weight:500;
+    text-align:left; padding:10px 12px; border-radius:9px;
+    cursor:pointer; transition:background .15s ease, color .15s ease;
+  }
+  .tab-btn .dot{ width:6px; height:6px; border-radius:50%; background:#7C8A63; flex-shrink:0; transition:background .15s; }
+  .tab-btn:hover{ background:rgba(255,255,255,0.06); color:#F3F1E4; }
+  .tab-btn.active{ background:#4F6B3E; color:#fff; }
+  .tab-btn.active .dot{ background:#B7E39A; }
+
+  .sidebar-footer{
+    margin-top:auto;
+    padding-top:16px;
+    border-top:1px solid rgba(255,255,255,0.12);
+  }
+  .sidebar-footer button{
+    background:none; border:none; color:#A6AD90; font-size:12px;
+    font-family:'Inter',sans-serif; cursor:pointer; padding:6px 4px;
+    text-decoration:underline; text-underline-offset:2px;
+  }
+  .sidebar-footer button:hover{ color:#F3F1E4; }
+  .sidebar-footer .count{ font-size:11px; color:#7C8465; margin-bottom:8px; }
+
+  /* ---------- Main ---------- */
+  main{ flex:1; min-width:0; padding:36px 42px 60px; }
+  .page-head{ margin-bottom:28px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--moss); margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces',serif; font-weight:600; font-size:30px; margin:0 0 6px;
+    color:var(--ink); letter-spacing:-0.01em;
+  }
+  .page-sub{ color:var(--ink-soft); font-size:14.5px; max-width:620px; line-height:1.5; }
+
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    border-radius:9px; padding:9px 16px; cursor:pointer; border:1px solid transparent;
+    display:inline-flex; align-items:center; gap:6px; transition:transform .1s ease, box-shadow .15s ease;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:var(--moss); color:#fff; }
+  .btn-primary:hover{ background:var(--moss-dark); }
+  .btn-ghost{ background:transparent; color:var(--moss-dark); border-color:var(--card-line); }
+  .btn-ghost:hover{ background:var(--moss-pale); }
+  .btn-danger{ background:transparent; color:var(--rust); border-color:var(--rust-pale); }
+  .btn-danger:hover{ background:var(--rust-pale); }
+  .btn-sm{ padding:6px 11px; font-size:12.5px; border-radius:7px; }
+
+  /* ---------- Dashboard ---------- */
+  .dash-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:18px;
+  }
+  .plant-card{
+    background:var(--card); border:1px solid var(--card-line); border-radius:var(--radius);
+    box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column;
+  }
+  .plant-photo{
+    height:130px; background:var(--moss-pale) center/cover no-repeat;
+    display:flex; align-items:center; justify-content:center; color:var(--moss);
+    font-size:34px; position:relative;
+  }
+  .plant-photo .status-pill{ position:absolute; top:10px; right:10px; }
+  .plant-card-body{ padding:16px 16px 14px; display:flex; flex-direction:column; gap:10px; }
+  .plant-name{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; line-height:1.15; }
+  .plant-species{ font-family:'Fraunces',serif; font-style:italic; color:var(--ink-soft); font-size:13px; margin-top:1px; }
+  .plant-loc{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-faint);
+    text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .status-pill{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:0.03em;
+    padding:3px 9px; border-radius:99px; text-transform:uppercase; display:inline-block;
+    background:#fff; border:1px solid var(--card-line); color:var(--ink-soft);
+  }
+  .status-pill.ok{ background:var(--moss-pale); color:var(--moss-dark); border-color:transparent; }
+  .status-pill.soon{ background:var(--amber-pale); color:#8A6118; border-color:transparent; }
+  .status-pill.overdue{ background:var(--rust-pale); color:var(--rust); border-color:transparent; }
+
+  .gauges{ display:flex; gap:14px; padding:6px 0 2px; }
+  .gauge{ display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+  .gauge svg{ display:block; }
+  .gauge-label{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft); text-align:center; line-height:1.3; }
+  .gauge-num{ font-weight:600; color:var(--ink); }
+
+  .quick-actions{ display:flex; gap:8px; margin-top:2px; }
+  .quick-actions .btn{ flex:1; justify-content:center; padding:8px 6px; font-size:12px; }
+
+  .empty-state{
+    border:1.5px dashed var(--card-line); border-radius:var(--radius); padding:52px 24px;
+    text-align:center; color:var(--ink-soft); background:var(--card);
+  }
+  .empty-state .big-leaf{ font-size:30px; margin-bottom:10px; }
+  .empty-state h3{ font-family:'Fraunces',serif; font-size:19px; margin:0 0 6px; color:var(--ink); }
+  .empty-state p{ font-size:13.5px; margin:0 0 18px; }
+
+  /* ---------- Table views (Plants + Logs) ---------- */
+  .panel{
+    background:var(--card); border:1px solid var(--card-line); border-radius:var(--radius);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .panel-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px; border-bottom:1px solid var(--card-line);
+  }
+  .panel-head h2{ font-family:'Fraunces',serif; font-size:17px; margin:0; font-weight:600; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:0.04em; color:var(--ink-faint); padding:10px 14px; border-bottom:1px solid var(--card-line);
+    white-space:nowrap;
+  }
+  tbody td{ padding:11px 14px; border-bottom:1px solid #EEE8D8; vertical-align:middle; color:var(--ink); }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:#F6F2E4; }
+  td.mono, .mono{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; }
+  td.notes-cell{ color:var(--ink-soft); max-width:220px; }
+  .row-thumb{ width:34px; height:34px; border-radius:8px; object-fit:cover; background:var(--moss-pale); display:block; }
+  .row-thumb-ph{ width:34px; height:34px; border-radius:8px; background:var(--moss-pale); color:var(--moss); display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .icon-btn{
+    background:none; border:none; cursor:pointer; color:var(--ink-faint); padding:4px 6px; border-radius:6px; font-size:13px;
+  }
+  .icon-btn:hover{ background:#EAE3CD; color:var(--ink); }
+  .icon-btn.danger:hover{ color:var(--rust); background:var(--rust-pale); }
+
+  /* Inline add-entry form for log tabs */
+  .log-form{
+    display:flex; flex-wrap:wrap; gap:10px; padding:16px 18px; background:#F6F2E4;
+    border-bottom:1px solid var(--card-line); align-items:flex-end;
+  }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint); }
+  .field input, .field select, .field textarea{
+    font-family:'Inter',sans-serif; font-size:13px; padding:8px 10px; border-radius:8px;
+    border:1px solid var(--card-line); background:#fff; color:var(--ink); min-width:120px;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:2px solid var(--moss); outline-offset:0; border-color:var(--moss);
+  }
+  .field.grow{ flex:1; min-width:160px; }
+  .field.notes{ flex:2; min-width:200px; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(36,42,29,0.42); display:flex; align-items:flex-start;
+    justify-content:center; padding:44px 18px; overflow-y:auto; z-index:50;
+  }
+  .modal{
+    background:var(--card); border-radius:16px; width:100%; max-width:560px; box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    animation: pop .16s ease-out;
+  }
+  @keyframes pop{ from{ opacity:0; transform:translateY(6px) scale(0.98);} to{opacity:1; transform:none;} }
+  .modal-head{ padding:20px 24px 4px; display:flex; align-items:center; justify-content:space-between; }
+  .modal-head h2{ font-family:'Fraunces',serif; font-size:20px; margin:0; }
+  .modal-close{ background:none; border:none; font-size:20px; color:var(--ink-faint); cursor:pointer; line-height:1; padding:4px; }
+  .modal-body{ padding:14px 24px 6px; display:grid; grid-template-columns:1fr 1fr; gap:14px; max-height:64vh; overflow-y:auto; }
+  .modal-body .field.full{ grid-column:1 / -1; }
+  .modal-foot{ padding:16px 24px 22px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+
+  .ph-row{ display:flex; align-items:center; gap:10px; }
+  .ph-row input[type=range]{ flex:1; accent-color:var(--moss); }
+  .ph-readout{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; min-width:44px; text-align:center;
+    padding:4px 0; border-radius:7px; background:#fff; border:1px solid var(--card-line);
+  }
+  .ph-scale{ display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--ink-faint); margin-top:2px; }
+
+  .photo-drop{
+    border:1.5px dashed var(--card-line); border-radius:10px; padding:12px; display:flex; align-items:center; gap:12px;
+    background:#fff; cursor:pointer;
+  }
+  .photo-drop img{ width:52px; height:52px; border-radius:8px; object-fit:cover; background:var(--moss-pale); }
+  .photo-drop .ph-placeholder{ width:52px; height:52px; border-radius:8px; background:var(--moss-pale); display:flex; align-items:center; justify-content:center; color:var(--moss); font-size:20px; }
+  .photo-drop .txt{ font-size:12.5px; color:var(--ink-soft); }
+  .photo-drop .txt b{ color:var(--ink); }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--moss-dark); color:#fff; padding:10px 18px; border-radius:99px; font-size:13px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2); z-index:80; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+
+  .loading-screen{ display:flex; align-items:center; justify-content:center; height:100vh; width:100%; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:13px; }
+
+  select.plant-select:disabled, input:disabled{ opacity:.5; cursor:not-allowed; }
+
+  @media (max-width: 860px){
+    .app{ flex-direction:column; }
+    .sidebar{ width:100%; height:auto; position:relative; flex-direction:row; align-items:center; padding:14px 16px; gap:14px; }
+    .brand-sub{ display:none; }
+    .brand{ margin:0; }
+    nav.tabs{ flex-direction:row; flex-wrap:wrap; gap:4px; }
+    .sidebar-footer{ display:none; }
+    main{ padding:22px 16px 60px; }
+    .modal-body{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading-screen">loading your greenhouse…</div>
+
+<div class="app" id="app" style="display:none;">
+  <aside class="sidebar">
+    <div class="brand"><span class="leaf">✦</span>Leaflog</div>
+    <div class="brand-sub">Indoor plant care ledger</div>
+    <nav class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="dashboard"><span class="dot"></span>Dashboard</button>
+      <button class="tab-btn" data-tab="plants"><span class="dot"></span>Plants</button>
+      <button class="tab-btn" data-tab="water"><span class="dot"></span>Watering Log</button>
+      <button class="tab-btn" data-tab="fert"><span class="dot"></span>Fertilizing Log</button>
+      <button class="tab-btn" data-tab="repot"><span class="dot"></span>Repotting Log</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="count" id="plantCount">0 plants tracked</div>
+      <button id="resetBtn">Clear all data</button>
+    </div>
+  </aside>
+
+  <main id="main"></main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================= STATE ============================= */
+const STORE_KEYS = { plants:'leaflog:plants', water:'leaflog:water-log', fert:'leaflog:fert-log', repot:'leaflog:repot-log' };
+let state = { plants:[], water:[], fert:[], repot:[] };
+let activeTab = 'dashboard';
+
+/* ============================= STORAGE ============================= */
+async function loadKey(key){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ console.error('Load failed', key, e); return []; }
+}
+async function saveKey(key, arr){
+  try{
+    localStorage.setItem(key, JSON.stringify(arr));
+  }catch(e){ console.error('Storage save failed', key, e); showToast('Could not save — device storage may be full'); }
+}
+async function loadAll(){
+  const [plants, water, fert, repot] = await Promise.all([
+    loadKey(STORE_KEYS.plants), loadKey(STORE_KEYS.water), loadKey(STORE_KEYS.fert), loadKey(STORE_KEYS.repot)
+  ]);
+  state = { plants, water, fert, repot };
+}
+
+/* ============================= HELPERS ============================= */
+function uid(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function todayISO(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function toDateObj(iso){ return new Date(iso+'T00:00:00'); }
+function daysBetween(fromISO, toISO){ return Math.round((toDateObj(toISO)-toDateObj(fromISO))/86400000); }
+function fmtDMY(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}-${m}-${y}`; }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function plantById(id){ return state.plants.find(p=>p.id===id); }
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function lastLogDate(logArr, plantId){
+  const entries = logArr.filter(l=>l.plantId===plantId && l.date);
+  if(!entries.length) return null;
+  return entries.reduce((max,l)=> l.date>max? l.date:max, entries[0].date);
+}
+function statusFor(daysSince, freq){
+  if(freq==null || freq==='' || isNaN(freq)) return {label:'No schedule', cls:''};
+  freq = Number(freq);
+  if(daysSince==null) return {label:'Not logged', cls:''};
+  if(daysSince > freq) return {label:'Overdue', cls:'overdue'};
+  if(daysSince >= freq-1) return {label:'Due soon', cls:'soon'};
+  return {label:'OK', cls:'ok'};
+}
+function phLabel(v){
+  v=Number(v);
+  if(v<=2) return 'Very alkaline'; if(v<=4) return 'Alkaline';
+  if(v===5) return 'Neutral'; if(v<=7) return 'Mildly acidic'; return 'Acidic';
+}
+
+/* ============================= GAUGE SVG ============================= */
+function gaugeSVG(daysSince, freq, colorHex){
+  const r=22, c=2*Math.PI*r;
+  let frac = 0;
+  if(freq && daysSince!=null){ frac = Math.min(daysSince/Number(freq), 1); }
+  const offset = c*(1-frac);
+  return `<svg width="54" height="54" viewBox="0 0 54 54">
+    <circle cx="27" cy="27" r="${r}" fill="none" stroke="#E5DFC9" stroke-width="5"/>
+    <circle cx="27" cy="27" r="${r}" fill="none" stroke="${colorHex}" stroke-width="5"
+      stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}"
+      transform="rotate(-90 27 27)"/>
+    <text x="27" y="31" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="#242A1D">${freq? (Math.max(Number(freq)-(daysSince||0),0)) : '—'}</text>
+  </svg>`;
+}
+const COLORS = { ok:'#4F6B3E', soon:'#C08A2E', overdue:'#B5452F', '':'#B9C0A6' };
+
+/* ============================= RENDER: SHELL ============================= */
+function setActiveTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.tab===tab));
+  render();
+}
+document.getElementById('tabs').addEventListener('click', e=>{
+  const btn = e.target.closest('.tab-btn'); if(!btn) return;
+  setActiveTab(btn.dataset.tab);
+});
+document.getElementById('resetBtn').addEventListener('click', async ()=>{
+  if(!confirm('This clears every plant and every log entry. This cannot be undone. Continue?')) return;
+  state = { plants:[], water:[], fert:[], repot:[] };
+  await Promise.all(Object.values(STORE_KEYS).map(k=>saveKey(k,[])));
+  showToast('All data cleared');
+  render();
+});
+
+function render(){
+  document.getElementById('plantCount').textContent = `${state.plants.length} plant${state.plants.length===1?'':'s'} tracked`;
+  const main = document.getElementById('main');
+  if(activeTab==='dashboard') main.innerHTML = renderDashboard();
+  else if(activeTab==='plants') main.innerHTML = renderPlantsTab();
+  else if(activeTab==='water') main.innerHTML = renderLogTab('water');
+  else if(activeTab==='fert') main.innerHTML = renderLogTab('fert');
+  else if(activeTab==='repot') main.innerHTML = renderLogTab('repot');
+  bindPageEvents();
+}
+
+/* ============================= DASHBOARD ============================= */
+function renderDashboard(){
+  if(!state.plants.length){
+    return pageHead('Dashboard','A live look at every plant — nothing here to type, it all pulls from your logs.') +
+      emptyState('✦','No plants yet','Add your first plant to start tracking watering, feeding, and repotting.','Add a plant','goto-plants');
+  }
+  const cards = state.plants.map(p=>{
+    const lw = lastLogDate(state.water, p.id);
+    const lf = lastLogDate(state.fert, p.id);
+    const lr = lastLogDate(state.repot, p.id);
+    const dsw = lw ? daysBetween(lw, todayISO()) : null;
+    const dsf = lf ? daysBetween(lf, todayISO()) : null;
+    const wStatus = statusFor(dsw, p.waterFreq);
+    const fStatus = statusFor(dsf, p.fertFreq);
+    const overallCls = [wStatus.cls,fStatus.cls].includes('overdue') ? 'overdue' : ([wStatus.cls,fStatus.cls].includes('soon') ? 'soon' : (wStatus.cls==='ok'||fStatus.cls==='ok' ? 'ok':''));
+    const overallLabel = overallCls==='overdue'?'Overdue':overallCls==='soon'?'Due soon':overallCls==='ok'?'OK':'No schedule';
+    return `
+    <div class="plant-card">
+      <div class="plant-photo" style="${p.photo?`background-image:url('${p.photo}')`:''}">
+        ${p.photo?'':'✦'}
+        <span class="status-pill ${overallCls}">${overallLabel}</span>
+      </div>
+      <div class="plant-card-body">
+        <div>
+          <div class="plant-name">${esc(p.name)}</div>
+          ${p.species?`<div class="plant-species">${esc(p.species)}</div>`:''}
+          ${p.location?`<div class="plant-loc">${esc(p.location)}</div>`:''}
+        </div>
+        <div class="gauges">
+          <div class="gauge">
+            ${gaugeSVG(dsw, p.waterFreq, COLORS[wStatus.cls])}
+            <div class="gauge-label">Water<br><span class="gauge-num">${lw? fmtDMY(lw):'not logged'}</span></div>
+          </div>
+          <div class="gauge">
+            ${gaugeSVG(dsf, p.fertFreq, COLORS[fStatus.cls])}
+            <div class="gauge-label">Feed<br><span class="gauge-num">${lf? fmtDMY(lf):'not logged'}</span></div>
+          </div>
+        </div>
+        <div class="quick-actions">
+          <button class="btn btn-ghost" data-quick="water" data-id="${p.id}">💧 Watered today</button>
+          <button class="btn btn-ghost" data-quick="fert" data-id="${p.id}">🌱 Fed today</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return pageHead('Dashboard','A live look at every plant — nothing here to type, it all pulls from your logs.') +
+    `<div class="dash-grid">${cards}</div>`;
+}
+
+/* ============================= PLANTS TAB ============================= */
+function renderPlantsTab(){
+  const head = pageHead('Plants','Your master list. Add a plant here first — it will then show up on every log and on the dashboard.',
+    `<button class="btn btn-primary" id="addPlantBtn">+ Add plant</button>`);
+  if(!state.plants.length){
+    return head + emptyState('✦','No plants yet','Add your first plant to get started.','Add a plant','open-add-plant');
+  }
+  const rows = state.plants.map(p=>`
+    <tr>
+      <td>${p.photo?`<img class="row-thumb" src="${p.photo}">`:`<div class="row-thumb-ph">✦</div>`}</td>
+      <td><b>${esc(p.name)}</b></td>
+      <td><span class="plant-species">${esc(p.species||'—')}</span></td>
+      <td>${esc(p.location||'—')}</td>
+      <td>${esc(p.light||'—')}</td>
+      <td>${esc(p.potSize||'—')}</td>
+      <td class="mono">${p.ph? p.ph+' · '+phLabel(p.ph) : '—'}</td>
+      <td class="mono">${p.waterFreq?`every ${p.waterFreq}d`:'—'}</td>
+      <td class="mono">${p.fertFreq?`every ${p.fertFreq}d`:'—'}</td>
+      <td class="notes-cell">${esc(p.notes||'')}</td>
+      <td>
+        <button class="icon-btn" data-edit-plant="${p.id}" title="Edit">✎</button>
+        <button class="icon-btn danger" data-del-plant="${p.id}" title="Delete">✕</button>
+      </td>
+    </tr>`).join('');
+  return head + `
+    <div class="panel">
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr>
+            <th>Photo</th><th>Name</th><th>Species</th><th>Location</th><th>Light</th><th>Pot</th>
+            <th>pH target</th><th>Watering</th><th>Feeding</th><th>Notes</th><th></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* ============================= LOG TABS ============================= */
+const LOG_META = {
+  water:{ title:'Watering Log', sub:'Log every watering. Next watering due is calculated from each plant’s frequency.', dataKey:'water', icon:'💧',
+    fields:[{key:'amount',label:'Amount',type:'text',placeholder:'e.g. 500 ml'},{key:'moisture',label:'Soil before',type:'select',options:['Dry','Slightly Moist','Moist','Wet']}] },
+  fert:{ title:'Fertilizing Log', sub:'Log every feeding. Next feeding due is calculated from each plant’s frequency.', dataKey:'fert', icon:'🌱',
+    fields:[{key:'type',label:'Fertilizer type',type:'text',placeholder:'e.g. Balanced 10-10-10'},{key:'amount',label:'Amount / dilution',type:'text',placeholder:'e.g. half strength, 250 ml'}] },
+  repot:{ title:'Repotting Log', sub:'Log every repot or soil refresh. Repotting is need-based, so there’s no automatic due date.', dataKey:'repot', icon:'🪴',
+    fields:[{key:'oldPot',label:'Old pot size',type:'text',placeholder:'8 in'},{key:'newPot',label:'New pot size',type:'text',placeholder:'10 in'},
+            {key:'soil',label:'Soil used',type:'text',placeholder:'Potting mix + perlite'},
+            {key:'reason',label:'Reason',type:'select',options:['Root Bound','Refresh Soil','Size Up','Pest / Disease Issue','Damaged Pot','Other']}] }
+};
+
+function renderLogTab(kind){
+  const meta = LOG_META[kind];
+  const head = pageHead(meta.title, meta.sub);
+  const hasPlants = state.plants.length>0;
+  const plantOptions = state.plants.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+
+  const extraFieldsHTML = meta.fields.map(f=>{
+    if(f.type==='select'){
+      return `<div class="field"><label>${f.label}</label><select data-f="${f.key}">${f.options.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>`;
+    }
+    return `<div class="field"><label>${f.label}</label><input type="text" data-f="${f.key}" placeholder="${f.placeholder||''}"></div>`;
+  }).join('');
+
+  const formHTML = `
+    <div class="log-form" id="logForm" data-kind="${kind}">
+      <div class="field"><label>Date</label><input type="date" id="logDate" value="${todayISO()}"></div>
+      <div class="field grow"><label>Plant</label>
+        <select id="logPlant" class="plant-select" ${hasPlants?'':'disabled'}>
+          ${hasPlants? '<option value="">Choose a plant…</option>'+plantOptions : '<option>Add a plant first</option>'}
+        </select>
+      </div>
+      ${extraFieldsHTML}
+      <div class="field notes"><label>Notes</label><input type="text" data-f="notes" placeholder="Optional"></div>
+      <button class="btn btn-primary" id="addLogBtn" ${hasPlants?'':'disabled'}>+ Add entry</button>
+    </div>`;
+
+  const entries = [...state[kind]].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  let tableHTML;
+  if(!entries.length){
+    tableHTML = `<div style="padding:36px 18px;"><div class="empty-state" style="border:none;background:none;padding:16px;">
+      <div class="big-leaf">${meta.icon}</div><h3>No entries yet</h3><p>Add your first log entry above.</p></div></div>`;
+  } else {
+    const colHeaders = meta.fields.map(f=>`<th>${f.label}</th>`).join('');
+    const dueHeader = kind==='repot' ? '' : `<th>Next Due</th>`;
+    const rows = entries.map(e=>{
+      const p = plantById(e.plantId);
+      const cols = meta.fields.map(f=>`<td>${esc(e[f.key]||'—')}</td>`).join('');
+      let dueCell = '';
+      if(kind!=='repot'){
+        const freq = p ? (kind==='water'? p.waterFreq : p.fertFreq) : null;
+        const due = (freq && e.date) ? addDays(e.date, Number(freq)) : null;
+        dueCell = `<td class="mono">${due? fmtDMY(due) : '—'}</td>`;
+      }
+      return `<tr>
+        <td class="mono">${fmtDMY(e.date)}</td>
+        <td><b>${p?esc(p.name):'<span style="color:var(--rust)">Deleted plant</span>'}</b></td>
+        ${cols}
+        <td class="notes-cell">${esc(e.notes||'')}</td>
+        ${dueCell}
+        <td><button class="icon-btn danger" data-del-log="${kind}:${e.id}" title="Delete">✕</button></td>
+      </tr>`;
+    }).join('');
+    tableHTML = `<div style="overflow-x:auto;"><table>
+      <thead><tr><th>Date</th><th>Plant</th>${colHeaders}<th>Notes</th>${dueHeader}<th></th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+  }
+
+  return head + `<div class="panel">${formHTML}${tableHTML}</div>`;
+}
+function addDays(iso, n){
+  const d = toDateObj(iso); d.setDate(d.getDate()+n);
+  return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+}
+
+/* ============================= SHARED UI PIECES ============================= */
+function pageHead(title, sub, actionHTML=''){
+  return `<div class="page-head" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px;">
+    <div>
+      <div class="eyebrow">Leaflog</div>
+      <h1>${title}</h1>
+      <div class="page-sub">${sub}</div>
+    </div>
+    ${actionHTML? `<div>${actionHTML}</div>`:''}
+  </div>`;
+}
+function emptyState(icon, title, sub, btnLabel, btnAction){
+  return `<div class="empty-state">
+    <div class="big-leaf">${icon}</div>
+    <h3>${title}</h3><p>${sub}</p>
+    <button class="btn btn-primary" data-empty-action="${btnAction}">${btnLabel}</button>
+  </div>`;
+}
+
+/* ============================= EVENTS ============================= */
+function bindPageEvents(){
+  document.querySelectorAll('[data-empty-action]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const action = b.dataset.emptyAction;
+      if(action==='goto-plants'){ setActiveTab('plants'); }
+      if(action==='open-add-plant'){ openPlantModal(null); }
+    });
+  });
+  const addBtn = document.getElementById('addPlantBtn');
+  if(addBtn) addBtn.addEventListener('click', ()=> openPlantModal(null));
+
+  document.querySelectorAll('[data-edit-plant]').forEach(b=>{
+    b.addEventListener('click', ()=> openPlantModal(plantById(b.dataset.editPlant)));
+  });
+  document.querySelectorAll('[data-del-plant]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      const p = plantById(b.dataset.delPlant);
+      if(!p) return;
+      if(!confirm(`Delete "${p.name}" and all of its log entries? This cannot be undone.`)) return;
+      state.plants = state.plants.filter(x=>x.id!==p.id);
+      state.water = state.water.filter(x=>x.plantId!==p.id);
+      state.fert = state.fert.filter(x=>x.plantId!==p.id);
+      state.repot = state.repot.filter(x=>x.plantId!==p.id);
+      await Promise.all([saveKey(STORE_KEYS.plants,state.plants), saveKey(STORE_KEYS.water,state.water),
+                          saveKey(STORE_KEYS.fert,state.fert), saveKey(STORE_KEYS.repot,state.repot)]);
+      showToast(`${p.name} deleted`);
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-quick]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      const kind = b.dataset.quick, plantId = b.dataset.id;
+      const entry = { id:uid(), plantId, date:todayISO(), notes:'' };
+      state[kind].push(entry);
+      await saveKey(STORE_KEYS[kind], state[kind]);
+      showToast(kind==='water' ? 'Watering logged' : 'Feeding logged');
+      render();
+    });
+  });
+
+  const logForm = document.getElementById('logForm');
+  if(logForm){
+    document.getElementById('addLogBtn').addEventListener('click', async ()=>{
+      const kind = logForm.dataset.kind;
+      const date = document.getElementById('logDate').value || todayISO();
+      const plantId = document.getElementById('logPlant').value;
+      if(!plantId){ showToast('Choose a plant first'); return; }
+      const entry = { id:uid(), plantId, date };
+      logForm.querySelectorAll('[data-f]').forEach(el=> entry[el.dataset.f]=el.value);
+      state[kind].push(entry);
+      await saveKey(STORE_KEYS[kind], state[kind]);
+      showToast('Entry added');
+      render();
+    });
+  }
+  document.querySelectorAll('[data-del-log]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      const [kind, id] = b.dataset.delLog.split(':');
+      if(!confirm('Delete this log entry?')) return;
+      state[kind] = state[kind].filter(e=>e.id!==id);
+      await saveKey(STORE_KEYS[kind], state[kind]);
+      render();
+    });
+  });
+}
+
+/* ============================= PLANT MODAL ============================= */
+function openPlantModal(existing){
+  const isEdit = !!existing;
+  const p = existing || { id:uid(), name:'', species:'', location:'', light:'Medium', potSize:'', soilType:'', ph:5, dateAcquired:todayISO(), waterFreq:7, fertFreq:30, notes:'', photo:'' };
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-head"><h2>${isEdit?'Edit plant':'Add a plant'}</h2><button class="modal-close" id="mClose">✕</button></div>
+      <div class="modal-body">
+        <div class="field full">
+          <label>Photo</label>
+          <div class="photo-drop" id="photoDrop">
+            ${p.photo?`<img id="photoPreview" src="${p.photo}">`:`<div class="ph-placeholder" id="photoPreview">✦</div>`}
+            <div class="txt"><b>Click to upload</b><br>or drag a photo here</div>
+            <input type="file" accept="image/*" id="photoInput" style="display:none;">
+          </div>
+        </div>
+        <div class="field"><label>Name</label><input id="fName" value="${esc(p.name)}" placeholder="e.g. Fiddle Leaf Fig"></div>
+        <div class="field"><label>Species</label><input id="fSpecies" value="${esc(p.species)}" placeholder="e.g. Ficus lyrata"></div>
+        <div class="field"><label>Location</label><input id="fLocation" value="${esc(p.location)}" placeholder="e.g. Living Room"></div>
+        <div class="field"><label>Light needs</label>
+          <select id="fLight">
+            ${['Low','Medium','Bright Indirect','Direct Sun'].map(o=>`<option ${p.light===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Pot size</label><input id="fPot" value="${esc(p.potSize)}" placeholder="e.g. 10 in"></div>
+        <div class="field"><label>Soil type</label><input id="fSoil" value="${esc(p.soilType)}" placeholder="e.g. Well-draining mix"></div>
+        <div class="field full">
+          <label>Soil pH required</label>
+          <div class="ph-row">
+            <input type="range" id="fPh" min="1" max="9" step="1" value="${p.ph||5}">
+            <div class="ph-readout" id="phReadout">${p.ph||5}</div>
+          </div>
+          <div class="ph-scale"><span>1 · Alkaline</span><span id="phWord">${phLabel(p.ph||5)}</span><span>9 · Acidic</span></div>
+        </div>
+        <div class="field"><label>Date acquired</label><input type="date" id="fDate" value="${p.dateAcquired||todayISO()}"></div>
+        <div class="field"><label>Watering frequency (days)</label><input type="number" min="1" id="fWaterFreq" value="${p.waterFreq||''}"></div>
+        <div class="field"><label>Fertilizing frequency (days)</label><input type="number" min="1" id="fFertFreq" value="${p.fertFreq||''}"></div>
+        <div class="field full"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Care notes…">${esc(p.notes)}</textarea></div>
+      </div>
+      <div class="modal-foot">
+        <span></span>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-ghost" id="mCancel">Cancel</button>
+          <button class="btn btn-primary" id="mSave">${isEdit?'Save changes':'Add plant'}</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const close = ()=> overlay.remove();
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) close(); });
+  overlay.querySelector('#mClose').addEventListener('click', close);
+  overlay.querySelector('#mCancel').addEventListener('click', close);
+
+  const phInput = overlay.querySelector('#fPh');
+  phInput.addEventListener('input', ()=>{
+    overlay.querySelector('#phReadout').textContent = phInput.value;
+    overlay.querySelector('#phWord').textContent = phLabel(phInput.value);
+  });
+
+  let photoData = p.photo || '';
+  const photoDrop = overlay.querySelector('#photoDrop');
+  const photoInput = overlay.querySelector('#photoInput');
+  photoDrop.addEventListener('click', ()=> photoInput.click());
+  photoInput.addEventListener('change', ()=>{
+    const file = photoInput.files[0]; if(!file) return;
+    resizeImage(file, 320, dataUrl=>{
+      photoData = dataUrl;
+      const preview = overlay.querySelector('#photoPreview');
+      const img = document.createElement('img'); img.id='photoPreview'; img.src=dataUrl;
+      preview.replaceWith(img);
+    });
+  });
+
+  overlay.querySelector('#mSave').addEventListener('click', async ()=>{
+    const name = overlay.querySelector('#fName').value.trim();
+    if(!name){ showToast('Give the plant a name first'); return; }
+    const updated = {
+      id:p.id, name,
+      species: overlay.querySelector('#fSpecies').value.trim(),
+      location: overlay.querySelector('#fLocation').value.trim(),
+      light: overlay.querySelector('#fLight').value,
+      potSize: overlay.querySelector('#fPot').value.trim(),
+      soilType: overlay.querySelector('#fSoil').value.trim(),
+      ph: Number(overlay.querySelector('#fPh').value),
+      dateAcquired: overlay.querySelector('#fDate').value,
+      waterFreq: overlay.querySelector('#fWaterFreq').value ? Number(overlay.querySelector('#fWaterFreq').value) : null,
+      fertFreq: overlay.querySelector('#fFertFreq').value ? Number(overlay.querySelector('#fFertFreq').value) : null,
+      notes: overlay.querySelector('#fNotes').value.trim(),
+      photo: photoData
+    };
+    const idx = state.plants.findIndex(x=>x.id===p.id);
+    if(idx>=0) state.plants[idx]=updated; else state.plants.push(updated);
+    await saveKey(STORE_KEYS.plants, state.plants);
+    showToast(isEdit? 'Plant updated' : 'Plant added');
+    close();
+    render();
+  });
+}
+
+function resizeImage(file, maxDim, cb){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      let { width, height } = img;
+      if(width>height){ if(width>maxDim){ height*=maxDim/width; width=maxDim; } }
+      else{ if(height>maxDim){ width*=maxDim/height; height=maxDim; } }
+      const canvas = document.createElement('canvas');
+      canvas.width=width; canvas.height=height;
+      canvas.getContext('2d').drawImage(img,0,0,width,height);
+      cb(canvas.toDataURL('image/jpeg',0.75));
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ============================= INIT ============================= */
+(async function init(){
+  await loadAll();
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='flex';
+  render();
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(err=> console.warn('SW registration failed', err));
+  });
+}
+</script>
+</body>
+</html>
